@@ -4,5 +4,4 @@ IFS=$'\n\t'
 set -vx
 
 bundle install
-
-# Do any other automated setup that you need to do here
+curl -sSL -O "https://addons.mozilla.org/firefox/downloads/file/4270812/har_export_trigger-0.6.2resigned1.xpi"

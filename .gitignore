@@ -7,5 +7,9 @@
 /spec/reports/
 /tmp/
 
+*.har
+*.swap
+*.xpi
+log
 # rspec failure tracking
 .rspec_status
