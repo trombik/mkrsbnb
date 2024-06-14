@@ -16,6 +16,10 @@ module Mkrsbnb
         @file = file
       end
 
+      def self.exit_on_failure?
+        true
+      end
+
       def har(file)
         HAR.new(File.read(file))
       end

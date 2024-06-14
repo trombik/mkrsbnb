@@ -31,6 +31,10 @@ module Mkrsbnb
         @opts.merge!(opts)
       end
 
+      def self.exit_on_failure?
+        true
+      end
+
       def date_checkin
         return @date_checkin if @date_checkin
 
