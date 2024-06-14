@@ -3,7 +3,7 @@ AllCops:
   NewCops: disable
   TargetRubyVersion: 3.0
   Exclude:
-    - vendor
+    - vendor/**/*
   # enable detailed explanations available in cops
   # the default output is not enough to understand what is wrong
   DisplayCopNames: true
