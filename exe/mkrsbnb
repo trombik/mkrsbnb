@@ -1,7 +1,12 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "date"
+require "pathname"
 require "thor"
+
+require "mkrsbnb/task/make_csv"
+require "mkrsbnb/task/airbnb_search"
 
 module Mkrsbnb
   # The CLI interface
@@ -15,7 +20,6 @@ module Mkrsbnb
                              default: "Krong-Siem-Reap--Siem-Reap--Cambodia"
     method_option :max_price, aliases: "--max", type: :numeric, desc: "Maximum price", default: 30
     def collect
-      require "mkrsbnb/task/airbnb_search"
       opts = {}
       options.each_pair do |k, v|
         opts[k.to_sym] = v
@@ -29,11 +33,47 @@ module Mkrsbnb
     method_option :out, aliases: "-o", type: :string, desc: "CSV file", default: "-"
     method_option :include_zero_reviews, type: :boolean, desc: "Include listings with zero review", default: false
     def csv
-      require "mkrsbnb/task/make_csv"
       task = Mkrsbnb::Task::MakeCSV.new(file: options[:file], csv_file: options[:out],
                                         reject_no_review: options[:include_zero_reviews])
       task.run
     end
+
+    desc "dump", "Collect HAR and make a CSV file"
+    method_option :dir, aliases: "-d", type: :string, desc: "directory to dump", default: Dir.pwd
+    method_option :file, aliases: "-f", type: :string,
+                         desc: "file name. the file name is postfixed with ${POSTFIX}.csv", default: "out-"
+    method_option :remove_har, aliases: "-R", type: :boolean, desc: "Remove HAR file after creating CSV file",
+                               default: false
+    method_option :postfix, aliases: "-p", type: :string, desc: "String to append to the file name",
+                            default: DateTime.now.iso8601
+
+    # collect
+    method_option :addon_dir, aliases: "-A", desc: "Path to a directory to find add-ons", default: Dir.pwd
+    method_option :log_level, aliases: "-l", desc: "Log level: info, warn, debug", default: "info"
+    method_option :headless, aliases: "-H", type: :boolean, desc: "Run the browser in headless mode", default: true
+    method_option :location, aliases: "-L", type: :string, desc: "Location to search",
+                             default: "Krong-Siem-Reap--Siem-Reap--Cambodia"
+    method_option :max_price, aliases: "--max", type: :numeric, desc: "Maximum price", default: 30
+
+    # csv
+    method_option :include_zero_reviews, type: :boolean, desc: "Include listings with zero review", default: false
+
+    # rubocop:disable Metrics/AbcSize
+    def dump
+      csv_file_path = Pathname.new(options[:dir]) / "#{options[:file]}#{options[:postfix]}.csv"
+      har_file_path = Pathname.new(options[:dir]) / "#{options[:file]}#{options[:postfix]}.har"
+
+      opts = {}
+      options.each_pair do |k, v|
+        opts[k.to_sym] = k == "file" ? har_file_path.to_s : v
+      end
+      Mkrsbnb::Task::AirbnbSearch.new(opts).run
+
+      Mkrsbnb::Task::MakeCSV.new(file: har_file_path.to_s, csv_file: csv_file_path.to_s,
+                                 reject_no_review: options[:include_zero_reviews]).run
+      File.unlink har_file_path.to_s if options[:remove_har]
+    end
+    # rubocop:enable Metrics/AbcSize
   end
 end
 
